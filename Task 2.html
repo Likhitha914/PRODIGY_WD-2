@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stopwatch</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: linear-gradient(to right, #f7f8f8, #acbb78);
+      color: #333;
+    }
+
+    .stopwatch-container {
+      margin-top: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stopwatch {
+      display: inline-block;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .digital {
+      font-size: 2.5em;
+      background-color: #282c34;
+      color: #61dafb;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .analog {
+      border: 1px solid #000;
+      background-color: white;
+      border-radius: 50%;
+      display: none; /* Initially hidden */
+    }
+
+    .controls button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .controls button:hover {
+      background-color: #61dafb;
+      color: white;
+    }
+
+    .laps {
+      margin-top: 20px;
+      text-align: left;
+      width: 80%;
+    }
+
+    .lap {
+      background-color: #f3f4f6;
+      padding: 10px;
+      margin-bottom: 5px;
+      border-left: 5px solid #61dafb;
+    }
+  </style>
+</head>
+<body>
+  <div class="stopwatch-container">
+    <div class="stopwatch">
+      <div id="digital" class="digital">00:00:00:000</div>
+      <canvas id="analog" class="analog" width="200" height="200"></canvas>
+    </div>
+    <div class="controls">
+      <button id="start-btn" style="background-color: #4CAF50; color: white;">Start</button>
+      <button id="pause-btn" style="background-color: #f39c12; color: white;">Pause</button>
+      <button id="reset-btn" style="background-color: #e74c3c; color: white;">Reset</button>
+      <button id="lap-btn" style="background-color: #2980b9; color: white;">Lap</button>
+      <button id="mode-btn" style="background-color: #8e44ad; color: white;">Switch Mode</button>
+    </div>
+    <div id="laps" class="laps"></div>
+  </div>
+
+  <script>
+    let mode = "digital"; // Default mode
+
+    function pad(num, size) {
+      return ('000' + num).slice(size * -1);
+    }
+
+    function formatTime(time) {
+      let hours = Math.floor(time / 3600000);
+      let minutes = Math.floor((time % 3600000) / 60000);
+      let seconds = Math.floor((time % 60000) / 1000);
+      let milliseconds = time % 1000;
+      return `${pad(hours, 2)}:${pad(minutes, 2)}:${pad(seconds, 2)}:${pad(milliseconds, 3)}`;
+    }
+
+    function updateDigitalDisplay() {
+      document.getElementById("digital").textContent = formatTime(timeElapsed);
+    }
+
+    function updateAnalogDisplay() {
+      const canvas = document.getElementById('analog');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const seconds = (timeElapsed / 1000) % 60;
+      const minutes = (timeElapsed / 60000) % 60;
+      const hours = (timeElapsed / 3600000) % 12;
+
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = '#000';
+
+      // Hours
+      ctx.beginPath();
+      ctx.arc(100, 100, 70, Math.PI * (-0.5 + 2 * (hours / 12)), Math.PI * -0.5);
+      ctx.stroke();
+
+      // Minutes
+      ctx.beginPath();
+      ctx.arc(100, 100, 80, Math.PI * (-0.5 + 2 * (minutes / 60)), Math.PI * -0.5);
+      ctx.stroke();
+
+      // Seconds
+      ctx.beginPath();
+      ctx.arc(100, 100, 90, Math.PI * (-0.5 + 2 * (seconds / 60)), Math.PI * -0.5);
+      ctx.stroke();
+    }
+
+    let interval;
+    let timeElapsed = 0;
+    let running = false;
+
+    function start() {
+      if (!running) {
+        interval = setInterval(updateTime, 10);
+        running = true;
+      }
+    }
+
+    function pause() {
+      clearInterval(interval);
+      running = false;
+    }
+
+    function reset() {
+      clearInterval(interval);
+      timeElapsed = 0;
+      running = false;
+      updateDisplay();
+      document.getElementById("laps").innerHTML = '';
+    }
+
+    function updateTime() {
+      timeElapsed += 10;
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      if (mode === "digital") {
+        document.getElementById("digital").style.display = 'block';
+        document.getElementById("analog").style.display = 'none';
+        updateDigitalDisplay();
+      } else if (mode === "analog") {
+        document.getElementById("digital").style.display = 'none';
+        document.getElementById("analog").style.display = 'block';
+        updateAnalogDisplay();
+      }
+    }
+
+    function switchMode() {
+      mode = (mode === "digital") ? "analog" : "digital";
+      updateDisplay();
+    }
+
+    function lap() {
+      const lapTime = formatTime(timeElapsed);
+      const lapElement = document.createElement('div');
+      lapElement.className = 'lap';
+      lapElement.textContent = lapTime;
+      document.getElementById('laps').appendChild(lapElement);
+    }
+
+    document.getElementById("start-btn").addEventListener("click", start);
+    document.getElementById("pause-btn").addEventListener("click", pause);
+    document.getElementById("reset-btn").addEventListener("click", reset);
+    document.getElementById("lap-btn").addEventListener("click", lap);
+    document.getElementById("mode-btn").addEventListener("click", switchMode);
+
+    // Initial display update
+    updateDisplay();
+  </script>
+</body>
+</html>
